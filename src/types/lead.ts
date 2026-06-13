@@ -4,4 +4,5 @@ export interface Lead {
   contact: string;
   status: 'Novo' | 'Em Atendimento' | 'Concluído';
   createdAt: string;
+  description?: string;
 }

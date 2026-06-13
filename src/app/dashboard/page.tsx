@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import { Lead } from "@/types/lead";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { LogOut, User, Plus } from "lucide-react";
+import { LogOut, User, Plus, X } from "lucide-react";
 import { ChatBot } from "@/components/ChatBot";
 
 const COLUMNS: { id: Lead['status']; label: string; color: string }[] = [
@@ -20,8 +20,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("Corretor");
   
-  // Estado necessário para o botão de Novo Lead não quebrar a aplicação
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newLeadName, setNewLeadName] = useState("");
+  const [newLeadContact, setNewLeadContact] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("@SI:token");
@@ -50,6 +52,32 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleCreateLead(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newLeadName.trim() || !newLeadContact.trim()) return;
+    
+    setIsCreating(true);
+    
+    try {
+      const response = await api.post("/leads", {
+        name: newLeadName,
+        contact: newLeadContact,
+        status: "Novo"
+      });
+      
+      setLeads(prev => [...prev, response.data]);
+      
+      setNewLeadName("");
+      setNewLeadContact("");
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Erro ao criar o lead", error);
+      alert("Houve um erro ao tentar salvar o lead. Verifique a conexão.");
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
   function handleDragStart(e: React.DragEvent, leadId: string) {
     e.dataTransfer.setData("text/plain", leadId);
   }
@@ -71,7 +99,6 @@ export default function DashboardPage() {
       await api.patch(`/leads/${leadId}`, { status: targetStatus });
     } catch (error) {
       console.error("Erro ao atualizar status do lead", error);
-      // Corrigido o erro de digitação de "originalOriginalLeads"
       setLeads(originalLeads); 
     }
   }
@@ -82,7 +109,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-bgLight dark:bg-brand-bgDark text-gray-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-brand-bgLight dark:bg-brand-bgDark text-gray-900 dark:text-white transition-colors duration-300 relative">
       
       <header className="px-8 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-brand-surfaceLight dark:bg-brand-surfaceDark transition-colors">
         <h1 className="font-title text-2xl font-bold">
@@ -114,7 +141,6 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* O BOTÃO DE NOVO LEAD INSERIDO CORRETAMENTE AQUI */}
           <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#EA580C] hover:opacity-90 text-white font-medium text-sm shadow-lg shadow-[#EA580C]/30 transition-all active:scale-[0.98] self-start sm:self-center font-sans"
@@ -176,6 +202,67 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+            
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-xl text-gray-900 dark:text-white font-title">Cadastrar Novo Lead</h3>
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateLead} className="space-y-4 font-sans">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Cliente</label>
+                <input 
+                  type="text" 
+                  required 
+                  value={newLeadName} 
+                  onChange={e => setNewLeadName(e.target.value)} 
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#EA580C] dark:focus:border-[#EA580C] text-gray-900 dark:text-white transition-colors" 
+                  placeholder="Ex: João Silva" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contato (E-mail ou Celular)</label>
+                <input 
+                  type="text" 
+                  required 
+                  value={newLeadContact} 
+                  onChange={e => setNewLeadContact(e.target.value)} 
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#EA580C] dark:focus:border-[#EA580C] text-gray-900 dark:text-white transition-colors" 
+                  placeholder="Ex: joao@email.com" 
+                />
+              </div>
+
+              <div className="flex gap-3 mt-8 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setIsModalOpen(false)} 
+                  className="flex-1 py-2.5 rounded-xl text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 font-medium transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isCreating} 
+                  className="flex-1 py-2.5 rounded-xl text-white bg-[#EA580C] hover:opacity-90 font-medium shadow-lg shadow-[#EA580C]/30 transition-all disabled:opacity-50"
+                >
+                  {isCreating ? "Salvando..." : "Salvar Lead"}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
 
       <ChatBot />
     </div>
