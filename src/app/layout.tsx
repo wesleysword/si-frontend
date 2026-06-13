@@ -1,32 +1,24 @@
 import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
-import { ThemeProvider } from "@/context/ThemeProvider";
 import "./globals.css";
+import { ThemeProvider } from "next-themes";
 
-const montserrat = Montserrat({ 
-  subsets: ["latin"], 
-  variable: "--font-montserrat" 
-});
-
-const inter = Inter({ 
-  subsets: ["latin"], 
-  variable: "--font-inter" 
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
 
 export const metadata: Metadata = {
-  title: "SI - Soluções Imobiliárias",
-  description: "Gerenciador de Leads Imobiliários",
+  title: "Soluções Imobiliárias",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${montserrat.variable} ${inter.variable} font-sans antialiased bg-brand-bgLight dark:bg-brand-bgDark text-brand-surfaceDark dark:text-brand-bgLight transition-colors duration-300`}>
-        <ThemeProvider>
+      <body className={`${inter.variable} ${montserrat.variable} antialiased bg-gray-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
         </ThemeProvider>
       </body>

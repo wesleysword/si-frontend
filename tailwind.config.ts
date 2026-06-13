@@ -1,7 +1,6 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  // Habilita o controle do dark mode através da classe 'dark' na tag html
   darkMode: "class", 
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -11,7 +10,6 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Nossas cores customizadas mapeadas da logo
         primary: {
           orange: "#D35400",
           gold: "#D4AF37",

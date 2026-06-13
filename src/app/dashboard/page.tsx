@@ -6,10 +6,11 @@ import { api } from "@/services/api";
 import { Lead } from "@/types/lead";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LogOut, User, Plus } from "lucide-react";
+import { ChatBot } from "@/components/ChatBot";
 
 const COLUMNS: { id: Lead['status']; label: string; color: string }[] = [
-  { id: "Novo", label: "Novos Leads", color: "border-t-primary-orange" },
-  { id: "Em Atendimento", label: "Em Atendimento", color: "border-t-primary-gold" },
+  { id: "Novo", label: "Novos Leads", color: "border-t-[#EA580C]" },
+  { id: "Em Atendimento", label: "Em Atendimento", color: "border-t-[#EAB308]" },
   { id: "Concluído", label: "Concluídos", color: "border-t-green-500" },
 ];
 
@@ -18,6 +19,9 @@ export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("Corretor");
+  
+  // Estado necessário para o botão de Novo Lead não quebrar a aplicação
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("@SI:token");
@@ -67,7 +71,8 @@ export default function DashboardPage() {
       await api.patch(`/leads/${leadId}`, { status: targetStatus });
     } catch (error) {
       console.error("Erro ao atualizar status do lead", error);
-      setLeads(originalOriginalLeads);
+      // Corrigido o erro de digitação de "originalOriginalLeads"
+      setLeads(originalLeads); 
     }
   }
 
@@ -81,13 +86,13 @@ export default function DashboardPage() {
       
       <header className="px-8 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-brand-surfaceLight dark:bg-brand-surfaceDark transition-colors">
         <h1 className="font-title text-2xl font-bold">
-          SI - Soluções <span className="text-primary-orange">Imobiliárias</span>
+          SI - Soluções <span className="text-[#EA580C]">Imobiliárias</span>
         </h1>
         
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm font-sans bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl">
-            <User className="w-4 h-4 text-primary-orange" />
-            <span>Olá, <strong className="text-primary-orange">{userName}</strong></span>
+            <User className="w-4 h-4 text-[#EA580C]" />
+            <span>Olá, <strong className="text-[#EA580C]">{userName}</strong></span>
           </div>
           <ThemeToggle />
           <button 
@@ -108,6 +113,15 @@ export default function DashboardPage() {
               Arraste e solte os cards para atualizar o status dos clientes em tempo real.
             </p>
           </div>
+
+          {/* O BOTÃO DE NOVO LEAD INSERIDO CORRETAMENTE AQUI */}
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#EA580C] hover:opacity-90 text-white font-medium text-sm shadow-lg shadow-[#EA580C]/30 transition-all active:scale-[0.98] self-start sm:self-center font-sans"
+          >
+            <Plus className="w-4 h-4" />
+            Novo Lead
+          </button>
         </div>
 
         {loading ? (
@@ -137,9 +151,9 @@ export default function DashboardPage() {
                         key={lead.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, lead.id)}
-                        className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-brand-bgLight dark:bg-brand-bgDark hover:border-primary-orange dark:hover:border-primary-orange cursor-grab active:cursor-grabbing transition-all shadow-sm hover:shadow-md font-sans group"
+                        className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-brand-bgLight dark:bg-brand-bgDark hover:border-[#EA580C] dark:hover:border-[#EA580C] cursor-grab active:cursor-grabbing transition-all shadow-sm hover:shadow-md font-sans group"
                       >
-                        <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-primary-orange transition-colors">
+                        <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-[#EA580C] transition-colors">
                           {lead.name}
                         </h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -162,6 +176,8 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
+
+      <ChatBot />
     </div>
   );
 }

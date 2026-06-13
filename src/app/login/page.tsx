@@ -84,12 +84,12 @@ export default function LoginPage() {
           </div>
 
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-primary-orange hover:bg-opacity-90 text-white font-medium shadow-lg shadow-primary-orange/20 transition-all active:scale-[0.98] disabled:opacity-50"
-          >
-            {loading ? "Autenticando..." : "Entrar no Sistema"}
-          </button>
+  type="submit"
+  disabled={loading}
+  className="w-full py-3 rounded-xl bg-[#EA580C] hover:opacity-90 text-white font-medium shadow-lg shadow-[#EA580C]/30 transition-all active:scale-[0.98] disabled:opacity-50"
+>
+  {loading ? "Autenticando..." : "Entrar no Sistema"}
+</button>
         </form>
 
         <div className="mt-6 text-center font-sans text-sm text-gray-500 dark:text-gray-400">
