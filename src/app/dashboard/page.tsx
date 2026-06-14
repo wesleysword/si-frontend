@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import { Lead } from "@/types/lead";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { LogOut, User, Plus, X } from "lucide-react";
+import { LogOut, User, Plus, X, Pencil } from "lucide-react";
 import { ChatBot } from "@/components/ChatBot";
 
 const COLUMNS: { id: Lead['status']; label: string; color: string }[] = [
@@ -21,9 +21,13 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState("Corretor");
   
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newLeadName, setNewLeadName] = useState("");
-  const [newLeadContact, setNewLeadContact] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  
+  const [leadName, setLeadName] = useState("");
+  const [leadContact, setLeadContact] = useState("");
+  const [leadDescription, setLeadDescription] = useState("");
+  const [leadStatus, setLeadStatus] = useState("Novo");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("@SI:token");
@@ -52,29 +56,52 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleCreateLead(e: React.FormEvent) {
+  function handleOpenCreateModal() {
+    setEditingLead(null);
+    setLeadName("");
+    setLeadContact("");
+    setLeadDescription("");
+    setLeadStatus("Novo");
+    setIsModalOpen(true);
+  }
+
+  function handleOpenEditModal(lead: Lead) {
+    setEditingLead(lead);
+    setLeadName(lead.name);
+    setLeadContact(lead.contact);
+    setLeadDescription(lead.description || "");
+    setLeadStatus(lead.status);
+    setIsModalOpen(true);
+  }
+
+  async function handleSaveLead(e: React.FormEvent) {
     e.preventDefault();
-    if (!newLeadName.trim() || !newLeadContact.trim()) return;
+    if (!leadName.trim() || !leadContact.trim()) return;
     
-    setIsCreating(true);
+    setIsSaving(true);
     
     try {
-      const response = await api.post("/leads", {
-        name: newLeadName,
-        contact: newLeadContact,
-        status: "Novo"
-      });
+      const payload = {
+        name: leadName,
+        contact: leadContact,
+        description: leadDescription,
+        status: leadStatus
+      };
+
+      if (editingLead) {
+        const response = await api.patch(`/leads/${editingLead.id}`, payload);
+        setLeads(prev => prev.map(lead => lead.id === editingLead.id ? response.data : lead));
+      } else {
+        const response = await api.post("/leads", payload);
+        setLeads(prev => [...prev, response.data]);
+      }
       
-      setLeads(prev => [...prev, response.data]);
-      
-      setNewLeadName("");
-      setNewLeadContact("");
       setIsModalOpen(false);
     } catch (error) {
-      console.error("Erro ao criar o lead", error);
+      console.error("Erro ao salvar o lead", error);
       alert("Houve um erro ao tentar salvar o lead. Verifique a conexão.");
     } finally {
-      setIsCreating(false);
+      setIsSaving(false);
     }
   }
 
@@ -142,7 +169,7 @@ export default function DashboardPage() {
           </div>
 
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenCreateModal}
             className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#EA580C] hover:opacity-90 text-white font-medium text-sm shadow-lg shadow-[#EA580C]/30 transition-all active:scale-[0.98] self-start sm:self-center font-sans"
           >
             <Plus className="w-4 h-4" />
@@ -177,14 +204,27 @@ export default function DashboardPage() {
                         key={lead.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, lead.id)}
-                        className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-brand-bgLight dark:bg-brand-bgDark hover:border-[#EA580C] dark:hover:border-[#EA580C] cursor-grab active:cursor-grabbing transition-all shadow-sm hover:shadow-md font-sans group"
+                        onClick={() => handleOpenEditModal(lead)}
+                        className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-brand-bgLight dark:bg-brand-bgDark hover:border-[#EA580C] dark:hover:border-[#EA580C] cursor-grab active:cursor-grabbing transition-all shadow-sm hover:shadow-md font-sans group relative"
                       >
-                        <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-[#EA580C] transition-colors">
-                          {lead.name}
-                        </h4>
+                        <div className="flex justify-between items-start mb-1">
+                          <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-[#EA580C] transition-colors pr-6">
+                            {lead.name}
+                          </h4>
+                          <Pencil className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity absolute top-4 right-4" />
+                        </div>
+                        
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {lead.contact}
                         </p>
+
+                        {lead.description && (
+                          <div className="mt-3 p-2 bg-brand-surfaceLight dark:bg-brand-surfaceDark border border-gray-100 dark:border-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 italic line-clamp-2">
+                            <span className="not-italic text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 block mb-0.5">Busca:</span>
+                            {lead.description}
+                          </div>
+                        )}
+
                         <div className="text-[10px] text-gray-400 mt-3 text-right">
                           {new Date(lead.createdAt).toLocaleDateString('pt-BR')}
                         </div>
@@ -208,7 +248,9 @@ export default function DashboardPage() {
           <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
             
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-xl text-gray-900 dark:text-white font-title">Cadastrar Novo Lead</h3>
+              <h3 className="font-bold text-xl text-gray-900 dark:text-white font-title">
+                {editingLead ? "Editar Detalhes do Lead" : "Cadastrar Novo Lead"}
+              </h3>
               <button 
                 onClick={() => setIsModalOpen(false)} 
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
@@ -217,14 +259,14 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateLead} className="space-y-4 font-sans">
+            <form onSubmit={handleSaveLead} className="space-y-4 font-sans">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Cliente</label>
                 <input 
                   type="text" 
                   required 
-                  value={newLeadName} 
-                  onChange={e => setNewLeadName(e.target.value)} 
+                  value={leadName} 
+                  onChange={e => setLeadName(e.target.value)} 
                   className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#EA580C] dark:focus:border-[#EA580C] text-gray-900 dark:text-white transition-colors" 
                   placeholder="Ex: João Silva" 
                 />
@@ -235,10 +277,34 @@ export default function DashboardPage() {
                 <input 
                   type="text" 
                   required 
-                  value={newLeadContact} 
-                  onChange={e => setNewLeadContact(e.target.value)} 
+                  value={leadContact} 
+                  onChange={e => setLeadContact(e.target.value)} 
                   className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#EA580C] dark:focus:border-[#EA580C] text-gray-900 dark:text-white transition-colors" 
                   placeholder="Ex: joao@email.com" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                <select 
+                  value={leadStatus} 
+                  onChange={e => setLeadStatus(e.target.value)} 
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#EA580C] dark:focus:border-[#EA580C] text-gray-900 dark:text-white transition-colors"
+                >
+                  <option value="Novo">Novo</option>
+                  <option value="Em Atendimento">Em Atendimento</option>
+                  <option value="Concluído">Concluído</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Perfil do Imóvel Buscado</label>
+                <textarea 
+                  value={leadDescription} 
+                  onChange={e => setLeadDescription(e.target.value)} 
+                  rows={3}
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#EA580C] dark:focus:border-[#EA580C] text-gray-900 dark:text-white transition-colors resize-none text-sm" 
+                  placeholder="Ex: Busca apartamento de 2 dormitórios com vaga..." 
                 />
               </div>
 
@@ -252,10 +318,10 @@ export default function DashboardPage() {
                 </button>
                 <button 
                   type="submit" 
-                  disabled={isCreating} 
+                  disabled={isSaving} 
                   className="flex-1 py-2.5 rounded-xl text-white bg-[#EA580C] hover:opacity-90 font-medium shadow-lg shadow-[#EA580C]/30 transition-all disabled:opacity-50"
                 >
-                  {isCreating ? "Salvando..." : "Salvar Lead"}
+                  {isSaving ? "Salvando..." : editingLead ? "Atualizar Dados" : "Salvar Lead"}
                 </button>
               </div>
             </form>
