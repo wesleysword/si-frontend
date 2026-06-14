@@ -5,6 +5,15 @@ export interface Interaction {
   leadId: string;
 }
 
+export interface Attachment {
+  id: string;
+  name: string;
+  path: string;
+  mimeType: string;
+  createdAt: string;
+  leadId: string;
+}
+
 export interface Lead {
   id: string;
   name: string;
@@ -14,4 +23,5 @@ export interface Lead {
   description?: string;
   createdAt: string;
   interactions?: Interaction[]; 
+  attachments?: Attachment[];
 }
