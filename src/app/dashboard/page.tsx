@@ -7,6 +7,7 @@ import { Lead } from "@/types/lead";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LogOut, User, Plus, X, Pencil, Send, Paperclip, FileText, Loader2 } from "lucide-react";
 import { ChatBot } from "@/components/ChatBot";
+import { MetricsDashboard } from "@/components/MetricsDashboard";
 
 const COLUMNS: { id: Lead['status']; label: string; color: string }[] = [
   { id: "Novo", label: "Novos Leads", color: "border-t-[#EA580C]" },
@@ -39,7 +40,6 @@ export default function DashboardPage() {
   const [newInteraction, setNewInteraction] = useState("");
   const [isAddingInteraction, setIsAddingInteraction] = useState(false);
   
-  // Estados e ref para o Upload
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -149,7 +149,6 @@ export default function DashboardPage() {
     }
   }
 
-  // NOVA FUNÇÃO: Upload de Arquivos
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !editingLead) return;
@@ -173,7 +172,7 @@ export default function DashboardPage() {
       alert("Houve um erro ao enviar o arquivo.");
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = ''; // Limpa o input
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }
 
@@ -228,6 +227,8 @@ export default function DashboardPage() {
             <Plus className="w-4 h-4" /> Novo Lead
           </button>
         </div>
+
+        <MetricsDashboard />
 
         {loading ? (
           <div className="text-center py-20 font-sans text-gray-500">Carregando painel...</div>
@@ -322,7 +323,6 @@ export default function DashboardPage() {
 
             <div className={`flex flex-col overflow-y-auto pr-2 ${editingLead ? 'md:flex-row md:gap-8' : ''}`}>
               
-              {/* LADO ESQUERDO: Dados */}
               <div className={editingLead ? "md:w-1/2 flex-shrink-0" : "w-full"}>
                 <form onSubmit={handleSaveLead} className="space-y-4 font-sans pb-4">
                   <div>
@@ -364,11 +364,9 @@ export default function DashboardPage() {
                 </form>
               </div>
 
-              {/* LADO DIREITO: Anexos e Timeline */}
               {editingLead && (
                 <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700 md:mt-0 md:pt-0 md:border-t-0 md:border-l md:pl-8 md:w-1/2 flex flex-col gap-6">
                   
-                  {/* SEÇÃO 1: DOCUMENTOS E ANEXOS */}
                   <div className="flex flex-col bg-gray-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 font-title uppercase tracking-wider flex items-center gap-2">
@@ -412,7 +410,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* SEÇÃO 2: TIMELINE DE ATENDIMENTO */}
                   <div className="flex flex-col flex-1">
                     <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 font-title uppercase tracking-wider">Histórico</h4>
                     <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 min-h-[150px]">
